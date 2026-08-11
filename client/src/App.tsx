@@ -42,7 +42,7 @@ export default function App() {
   const [streaming, setStreaming] = useState(false);
   const [parseInput, setParseInput] = useState('');
   const [parseResult, setParseResult] = useState<any>(null);
-  const [parseModel, setParseModel] = useState('laguna-s-2.1-free');
+  const [parseModel, setParseModel] = useState('deepseek-v4-flash-free');
   const [parseBaseURL, setParseBaseURL] = useState('https://opencode.ai/zen/v1');
   const [parseApiKey, setParseApiKey] = useState('');
   const [tab, setTab] = useState<'chat' | 'keys' | 'agents' | 'providers'>('chat');

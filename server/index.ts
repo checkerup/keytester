@@ -123,7 +123,7 @@ fastify.post('/api/parse', async (request) => {
   const { text, parseModel, parseBaseURL, parseApiKey } = request.body as any;
   const openaiUrl = parseBaseURL || 'https://opencode.ai/zen/v1';
   const apiKey = parseApiKey || '';
-  const model = parseModel || 'laguna-s-2.1-free';
+  const model = parseModel || 'deepseek-v4-flash-free';
   try {
     const response = await fetch(`${openaiUrl}/chat/completions`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}) },
@@ -151,15 +151,26 @@ fastify.get('/api/models/:providerId', async (request) => {
   } catch (e: any) { return { error: e.message }; }
 });
 
-// OpenCode Zen endpoints
-fastify.get('/api/opencode/status', async () => ({ available: opencodeProxyReady, port: OPENCODE_PROXY_PORT, cli: existsSync(OPENCODE_CLI) ? OPENCODE_CLI : null }));
-fastify.post('/api/opencode/start', async () => { const ok = await startOpencodeProxy(); return { started: ok, ready: opencodeProxyReady }; });
+// OpenCode Zen endpoints (free, no key needed)
+fastify.get('/api/opencode/status', async () => ({ available: true, port: 0, cli: null, direct: true }));
+fastify.post('/api/opencode/start', async () => ({ started: true, ready: true }));
 fastify.post('/api/opencode/chat', async (request) => {
   const { model, message, customPrompt } = request.body as any;
-  if (!opencodeProxyReady) return { error: 'OpenCode proxy not ready. Call POST /api/opencode/start first.' };
-  try { const content = await opencodeRun(model, message, customPrompt); return { content, model }; } catch (e: any) { return { error: e.message }; }
+  try {
+    const messages = customPrompt
+      ? [{ role: 'system', content: customPrompt }, { role: 'user', content: message }]
+      : [{ role: 'user', content: message }];
+    const response = await fetch('https://opencode.ai/zen/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model, messages, max_tokens: 1000 }),
+    });
+    const data = await response.json() as any;
+    if (data.error) return { error: data.error.message || 'Unknown error' };
+    return { content: data.choices?.[0]?.message?.content || '(no response)', model };
+  } catch (e: any) { return { error: e.message }; }
 });
-fastify.get('/api/opencode/models', async () => ({ models: ['big-pickle', 'deepseek-v4-flash-free', 'mimo-v2.5-free', 'laguna-s-2.1-free', 'ling-3.0-tiny-free', 'longcat-2.0-free', 'north-mini-code-free', 'nemotron-3-ultra-free'] }));
+fastify.get('/api/opencode/models', async () => ({ models: ['deepseek-v4-flash-free', 'big-pickle', 'mimo-v2.5-free', 'laguna-s-2.1-free', 'ling-3.0-tiny-free', 'longcat-2.0-free', 'north-mini-code-free', 'nemotron-3-ultra-free', 'kimi-k3', 'glm-5.2', 'deepseek-v4-pro', 'qwen3.7-max', 'grok-4.5'] }));
 
 // WebSocket chat
 fastify.register(async (app) => {
@@ -201,5 +212,5 @@ const HOST = process.env.HOST || '0.0.0.0';
 try {
   await fastify.listen({ port: PORT, host: HOST });
   console.log(`KeyTester server running on http://${HOST}:${PORT}`);
-  if (process.env.USE_OPENCODE_PROXY === '1' || process.env.USE_OPENCODE_PROXY === 'true') { console.log('Auto-starting OpenCode proxy...'); await startOpencodeProxy(); }
+  if (process.env.USE_OPENCODE_PROXY === '1' || process.env.USE_OPENCODE_PROXY === 'true') { console.log('OpenCode Zen: free models available directly (no proxy needed)'); }
 } catch (e) { console.error(e); process.exit(1); }
