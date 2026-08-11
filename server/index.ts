@@ -35,6 +35,7 @@ if (!existsSync(AGENTS_FILE)) saveJSON(AGENTS_FILE, {
 });
 if (!existsSync(PROVIDERS_FILE)) saveJSON(PROVIDERS_FILE, {
   providers: [
+    { id: 'zen', name: 'OpenCode Zen (Free)', baseURL: 'https://opencode.ai/zen/v1', apiKey: '', models: ['deepseek-v4-flash-free', 'big-pickle', 'mimo-v2.5-free', 'laguna-s-2.1-free', 'ling-3.0-tiny-free', 'longcat-2.0-free', 'north-mini-code-free', 'nemotron-3-ultra-free', 'kimi-k3', 'glm-5.2', 'deepseek-v4-pro', 'qwen3.7-max', 'grok-4.5'] },
     { id: 'omniroute', name: 'Omniroute (Local)', baseURL: process.env.OMNIROUTE_URL || 'http://localhost:20128/v1', apiKey: process.env.OMNIROUTE_KEY || '', models: ['dashscope/glm-5.2', 'dashscope/kimi/kimi-k3', 'dashscope/deepseek-v4-pro'] },
     { id: 'blackbox', name: 'Blackbox (Free)', baseURL: 'https://api.blackbox.ai/v1', apiKey: process.env.BLACKBOX_KEY || '', models: ['blackboxai/mistral/mistral-medium-3.5', 'blackboxai/meta/llama-3.1-70b'] },
     { id: 'xkiro', name: 'XKiro (Free)', baseURL: 'https://api.xkiro.com/v1', apiKey: process.env.XKIRO_KEY || '', models: ['deepseek/deepseek-v4-pro', 'mistralai/mistral-large-2512'] },
@@ -120,9 +121,9 @@ fastify.delete('/api/keys/:id', async (request) => {
 
 fastify.post('/api/parse', async (request) => {
   const { text, parseModel, parseBaseURL, parseApiKey } = request.body as any;
-  const openaiUrl = parseBaseURL || 'https://api.blackbox.ai/v1';
-  const apiKey = parseApiKey || process.env.BLACKBOX_KEY || '';
-  const model = parseModel || 'blackboxai/mistral/mistral-medium-3.5';
+  const openaiUrl = parseBaseURL || 'https://opencode.ai/zen/v1';
+  const apiKey = parseApiKey || '';
+  const model = parseModel || 'laguna-s-2.1-free';
   try {
     const response = await fetch(`${openaiUrl}/chat/completions`, {
       method: 'POST', headers: { 'Content-Type': 'application/json', ...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {}) },
