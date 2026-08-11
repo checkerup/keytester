@@ -1,0 +1,7 @@
+node_modules/
+dist/
+config/keys.json
+config/agents.json
+config/providers.json
+*.log
+.env
